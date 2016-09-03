@@ -22,7 +22,7 @@ struct quaternion{
 };
 
 class IMU{
-public:
+public: // Public Interface
   /// Init communication with the MPU6050 and configure offsets.
   bool init();
 
@@ -43,7 +43,9 @@ public:
   /// Get Yaw, pitch and roll
   vec3 ypr();
   
-private:
+private:  // Private interface
+  void updateData();
+private:  // members
   MPU6050 mMpu;
 
   // MPU control/status vars
@@ -51,8 +53,8 @@ private:
   uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
   uint8_t mDevStatus;      // return status after each device operation (0 = success, !0 = error)
   uint16_t mPacketSize;    // expected DMP packet size (default is 42 bytes)
-  uint16_t fifoCount;     // count of all bytes currently in FIFO
-  uint8_t fifoBuffer[64]; // FIFO storage buffer
+  uint16_t mFifoCount;     // count of all bytes currently in FIFO
+  uint8_t mFifoBuffer[64]; // FIFO storage buffer
 
   // ================================================================
   // ===               INTERRUPT DETECTION ROUTINE                ===

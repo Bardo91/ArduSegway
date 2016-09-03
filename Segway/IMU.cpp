@@ -43,11 +43,12 @@ void IMU::init(){
 
 //-------------------------------------------------------------------------------------------------------------------
 bool IMU::isReady(){
-  
+  return mDmpReady;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 vec3 IMU::accel(){
+  updateData();
   VectorInt16 aa;         // [x, y, z]            accel sensor measurements
   VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
   Quaternion q;           // [w, x, y, z]         quaternion container
@@ -60,6 +61,7 @@ vec3 IMU::accel(){
 
 //-------------------------------------------------------------------------------------------------------------------
 vec3 IMU::accelWorld(){
+  updateData();
   VectorInt16 aa;         // [x, y, z]            accel sensor measurements
   VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
   VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
@@ -78,6 +80,7 @@ vec3 IMU::gyro(){
 }
 
 vec3 IMU:euler(){
+  updateData();
   Quaternion q;           // [w, x, y, z]         quaternion container
   float euler[3];         // [psi, theta, phi]    Euler angle container
   mpu.dmpGetQuaternion(&q, fifoBuffer);
@@ -88,6 +91,7 @@ vec3 IMU:euler(){
 
 //-------------------------------------------------------------------------------------------------------------------
 Quaternion IMU::quaternion(){
+  updateData();
   Quaternion q;           // [w, x, y, z]         quaternion container
   mMpu.dmpGetQuaternion(&q, fifoBuffer);
   return q;
@@ -95,6 +99,7 @@ Quaternion IMU::quaternion(){
 
 //-------------------------------------------------------------------------------------------------------------------
 vec3 IMU::ypr(){
+  updateData();
   float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
   float euler[3];         // [psi, theta, phi]    Euler angle container
   Quaternion q;           // [w, x, y, z]         quaternion container
@@ -104,5 +109,35 @@ vec3 IMU::ypr(){
   mMpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
   vec3 angles = {euler[0], euler[1], euler[2]};
   return angles;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+void IMU::updateData(){
+  // wait for MPU interrupt or extra packet(s) available
+    while (!mMpuInterrupt && mFifoCount < mPacketSize) {
+    }
+
+    // reset interrupt flag and get INT_STATUS byte
+    mMpuInterrupt = false;
+    mMpuIntStatus = mpu.getIntStatus();
+
+    // get current FIFO count
+    mFifoCount = mMpu.getFIFOCount();
+
+    // check for overflow (this should never happen unless our code is too inefficient)
+    if ((mMpuIntStatus & 0x10) || mFifoCount == 1024) {
+        // reset so we can continue cleanly
+        mMpu.resetFIFO();
+    } else if (mMpuIntStatus & 0x02) {
+        // wait for correct available data length, should be a VERY short wait
+        while (mFifoCount < mPacketSize) mFifoCount = mMpu.getFIFOCount();
+
+        // read a packet from FIFO
+        mMpu.getFIFOBytes(mFifoBuffer, mPacketSize);
+        
+        // track FIFO count here in case there is > 1 packet available
+        // (this lets us immediately read more without waiting for an interrupt)
+        mFifoCount -= mPacketSize;
+    }
 }
 
