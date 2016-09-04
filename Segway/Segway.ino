@@ -3,7 +3,6 @@
 //    ArduSegway
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bajar librerias MPU6050 y I2cdev desde aqui http://www.prometec.net/usando-el-mpu6050/.
 
 #include "IMU.h"
 
@@ -13,7 +12,7 @@
 IMU *imu;
 void setup() {
     IMU::create();
-    imu = imu->get();
+    imu = IMU::get();
 }
 
 // ================================================================

@@ -7,7 +7,7 @@
 #include "IMU.h"
 
 // Static data initialization
-IMU* IMU::mInstance = nullptr;
+static IMU* IMU::mInstance = nullptr;
 
 //-------------------------------------------------------------------------------------------------------------------
 static bool IMU::create(){
