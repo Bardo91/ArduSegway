@@ -56,6 +56,7 @@ public: // Public Interface
 private:  // Private interface
   IMU();
   void updateData();
+  
 private:  // members
   MPU6050 mMpu;
 
