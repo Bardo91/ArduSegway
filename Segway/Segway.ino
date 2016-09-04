@@ -5,12 +5,15 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bajar librerias MPU6050 y I2cdev desde aqui http://www.prometec.net/usando-el-mpu6050/.
 
+#include "IMU.H"
 
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
+IMU *imu;
 void setup() {
-    segway.init();
+    IMU::create();
+    imu = imu->get();
 }
 
 // ================================================================
@@ -18,7 +21,7 @@ void setup() {
 // ================================================================
 void loop() {
     // if programming failed, don't try to do anything
-    if (!segway.isReady()) return;
+    if (!imu->isReady()) return;
 
-    vec3 ypr = segway.imu().ypr();
+    vec3 ypr = imu->ypr();
 }

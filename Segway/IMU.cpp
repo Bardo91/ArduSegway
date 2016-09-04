@@ -54,7 +54,7 @@ bool IMU::init(){
         attachInterrupt(0, callbackIMU, RISING);
         mMpuIntStatus = mMpu.getIntStatus();
         mDmpReady = true;
-        mPacketSize = mMpu.dmpGetFIFOmPacketSize();
+        mPacketSize = mMpu.dmpGetFIFOPacketSize();
         return true;
     } else {
        return false;
