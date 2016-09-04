@@ -78,8 +78,6 @@ private:  // members
 
 };
 
-void callbackIMU() {
-      IMU::get()->dmpDataReady();
-}
+void callbackIMU();
 
 #endif  //  _ARDUSEGWAY_IMU_H_
