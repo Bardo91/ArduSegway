@@ -5,8 +5,28 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "IMU.h"
+
+// Static data initialization
+IMU* IMU::mInstance = nullptr;
+
 //-------------------------------------------------------------------------------------------------------------------
-void IMU::init(){
+static bool IMU::create(){
+  if(mInstance==nullptr){
+    mInstance = new IMU();
+    mInstance->init();
+    return true;
+  }else{
+    return false;
+  }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+IMU* IMU::get(){
+  return mInstance;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+bool IMU::init(){
   // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -31,7 +51,7 @@ void IMU::init(){
     // make sure it worked (returns 0 if so)
     if (mDevStatus == 0) {
         mMpu.setDMPEnabled(true);
-        attachInterrupt(0, dmpDataReady, RISING);
+        attachInterrupt(0, callbackIMU, RISING);
         mMpuIntStatus = mMpu.getIntStatus();
         mDmpReady = true;
         mPacketSize = mMpu.dmpGetFIFOmPacketSize();
@@ -53,10 +73,10 @@ vec3 IMU::accel(){
   VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
   Quaternion q;           // [w, x, y, z]         quaternion container
   VectorFloat gravity;    // [x, y, z]            gravity vector
-  mpu.dmpGetQuaternion(&q, fifoBuffer);
-  mpu.dmpGetAccel(&aa, fifoBuffer);
-  mpu.dmpGetGravity(&gravity, &q);
-  mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+  mMpu.dmpGetQuaternion(&q, mFifoBuffer);
+  mMpu.dmpGetAccel(&aa, mFifoBuffer);
+  mMpu.dmpGetGravity(&gravity, &q);
+  mMpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -67,11 +87,11 @@ vec3 IMU::accelWorld(){
   VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
   Quaternion q;           // [w, x, y, z]         quaternion container
   VectorFloat gravity;    // [x, y, z]            gravity vector
-  mpu.dmpGetQuaternion(&q, fifoBuffer);
-  mpu.dmpGetAccel(&aa, fifoBuffer);
-  mpu.dmpGetGravity(&gravity, &q);
-  mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-  mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+  mMpu.dmpGetQuaternion(&q, mFifoBuffer);
+  mMpu.dmpGetAccel(&aa, mFifoBuffer);
+  mMpu.dmpGetGravity(&gravity, &q);
+  mMpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+  mMpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
 }
   
 //-------------------------------------------------------------------------------------------------------------------
@@ -79,12 +99,12 @@ vec3 IMU::gyro(){
   
 }
 
-vec3 IMU:euler(){
+vec3 IMU::euler(){
   updateData();
   Quaternion q;           // [w, x, y, z]         quaternion container
   float euler[3];         // [psi, theta, phi]    Euler angle container
-  mpu.dmpGetQuaternion(&q, fifoBuffer);
-  mpu.dmpGetEuler(euler, &q);
+  mMpu.dmpGetQuaternion(&q, mFifoBuffer);
+  mMpu.dmpGetEuler(euler, &q);
   vec3 angles = {euler[0], euler[1], euler[2]};
   return angles;
 }
@@ -93,7 +113,7 @@ vec3 IMU:euler(){
 Quaternion IMU::quaternion(){
   updateData();
   Quaternion q;           // [w, x, y, z]         quaternion container
-  mMpu.dmpGetQuaternion(&q, fifoBuffer);
+  mMpu.dmpGetQuaternion(&q, mFifoBuffer);
   return q;
 }
 
@@ -104,7 +124,7 @@ vec3 IMU::ypr(){
   float euler[3];         // [psi, theta, phi]    Euler angle container
   Quaternion q;           // [w, x, y, z]         quaternion container
   VectorFloat gravity;    // [x, y, z]            gravity vector
-  mMpu.dmpGetQuaternion(&q, fifoBuffer);
+  mMpu.dmpGetQuaternion(&q, mFifoBuffer);
   mMpu.dmpGetGravity(&gravity, &q);
   mMpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
   vec3 angles = {euler[0], euler[1], euler[2]};
@@ -119,7 +139,7 @@ void IMU::updateData(){
 
     // reset interrupt flag and get INT_STATUS byte
     mMpuInterrupt = false;
-    mMpuIntStatus = mpu.getIntStatus();
+    mMpuIntStatus = mMpu.getIntStatus();
 
     // get current FIFO count
     mFifoCount = mMpu.getFIFOCount();

@@ -24,8 +24,12 @@ struct quaternion{
 class IMU{
 public: // Public Interface
   /// Init communication with the MPU6050 and configure offsets.
-  bool init();
+  static bool create();
+  static IMU *get();
 
+
+  bool init();
+  
   /// Returns true if everything was configured properly during the initialization.
   bool isReady();
 
@@ -37,20 +41,27 @@ public: // Public Interface
   
   vec3 gyro();
 
+  vec3 euler();
+
   // Get Quaternion.
   Quaternion quaternion();
   
   /// Get Yaw, pitch and roll
   vec3 ypr();
+
+  void dmpDataReady() {
+      mMpuInterrupt = true;
+  }
   
 private:  // Private interface
+  IMU();
   void updateData();
 private:  // members
   MPU6050 mMpu;
 
   // MPU control/status vars
   bool mDmpReady = false;  // set true if DMP init was successful
-  uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
+  uint8_t mMpuIntStatus;   // holds actual interrupt status byte from MPU
   uint8_t mDevStatus;      // return status after each device operation (0 = success, !0 = error)
   uint16_t mPacketSize;    // expected DMP packet size (default is 42 bytes)
   uint16_t mFifoCount;     // count of all bytes currently in FIFO
@@ -60,9 +71,11 @@ private:  // members
   // ===               INTERRUPT DETECTION ROUTINE                ===
   // ================================================================
   volatile bool mMpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
-  void dmpDataReady() {
-      mMpuInterrupt = true;
-  }
+  // Singletone
+  static IMU *mInstance;
 
 };
 
+void callbackIMU() {
+      IMU::get()->dmpDataReady();
+}

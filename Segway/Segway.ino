@@ -5,8 +5,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bajar librerias MPU6050 y I2cdev desde aqui http://www.prometec.net/usando-el-mpu6050/.
 
-#include "ArduSegway.h"
-ArduSegway segway;
 
 // ================================================================
 // ===                      INITIAL SETUP                       ===
