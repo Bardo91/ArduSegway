@@ -7,19 +7,11 @@
 #ifndef _ARDUSEGWAY_IMU_H_
 #define _ARDUSEGWAY_IMU_H_
 
-#include "I2Cdev.h"
-#include "MPU6050_6Axis_MotionApps20.h"
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
-#endif
-
+struct Quaternion;
+class MPU6050;
 
 struct vec3{
   float x, y, z;
-};
-
-struct quaternion{
-  float x, y, z, w;
 };
 
 class IMU{
@@ -50,24 +42,22 @@ public: // Public Interface
   /// Get Yaw, pitch and roll
   vec3 ypr();
 
-  void dmpDataReady() {
-      mMpuInterrupt = true;
-  }
+  void dmpDataReady();
   
 private:  // Private interface
   IMU();
   void updateData();
   
 private:  // members
-  MPU6050 mMpu;
+  MPU6050 *mMpu;
 
   // MPU control/status vars
   bool mDmpReady = false;  // set true if DMP init was successful
-  uint8_t mMpuIntStatus;   // holds actual interrupt status byte from MPU
-  uint8_t mDevStatus;      // return status after each device operation (0 = success, !0 = error)
-  uint16_t mPacketSize;    // expected DMP packet size (default is 42 bytes)
-  uint16_t mFifoCount;     // count of all bytes currently in FIFO
-  uint8_t mFifoBuffer[64]; // FIFO storage buffer
+  unsigned char mMpuIntStatus;   // holds actual interrupt status byte from MPU
+  unsigned char mDevStatus;      // return status after each device operation (0 = success, !0 = error)
+  unsigned int mPacketSize;    // expected DMP packet size (default is 42 bytes)
+  unsigned int mFifoCount;     // count of all bytes currently in FIFO
+  unsigned char mFifoBuffer[64]; // FIFO storage buffer
 
   // ================================================================
   // ===               INTERRUPT DETECTION ROUTINE                ===
